@@ -1,15 +1,18 @@
 """
-error_analysis.py — Analyses the latest bulk test results for failure modes:
-  1. Format compliance  (## heading, ### Ingredients, ### Instructions)
-  2. Recipe repetition  (same recipe name suggested multiple times)
-  3. Safety compliance  (unsafe queries declined correctly)
-  4. Serving size       (large-group query respected)
-  5. Time constraint    (under-30-min query respected)
-  6. Chicken bias       (vague queries defaulting to chicken)
+error_analysis.py — Analyses bulk test results for failure modes:
+  1. Format compliance      (## heading, ### Ingredients, ### Instructions)
+  2. Recipe repetition      (same recipe name suggested multiple times)
+  3. Dietary compliance     (checks dietary restriction keywords in response)
+  4. Skill level compliance (checks instruction complexity matches skill level)
+  5. Cuisine compliance     (checks cuisine mentioned in response)
+  6. Safety compliance      (unsafe queries declined correctly)
+  7. Serving size           (large-group query respected)
+
+Works with both sample_queries.csv and dimension_queries.csv result formats.
 
 Usage:
     uv run python scripts/error_analysis.py
-    uv run python scripts/error_analysis.py results/results_20260411_183535.json
+    uv run python scripts/error_analysis.py results/results_<timestamp>.json
 """
 
 import json
@@ -17,13 +20,34 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
+ROOT        = Path(__file__).parent.parent
 RESULTS_DIR = ROOT / "results"
+
+# ── Dietary keywords that should NOT appear for each restriction ───────────────
+DIETARY_FORBIDDEN = {
+    "Vegan":       ["chicken", "beef", "pork", "lamb", "fish", "salmon", "shrimp",
+                    "bacon", "butter", "milk", "cream", "cheese", "egg", "honey"],
+    "Gluten-free": ["flour", "bread", "pasta", "wheat", "barley", "rye", "soy sauce",
+                    "breadcrumbs", "couscous", "semolina"],
+    "Keto":        ["rice", "pasta", "bread", "flour", "sugar", "potato", "corn",
+                    "oats", "honey", "maple syrup"],
+    "Nut-free":    ["peanut", "almond", "cashew", "walnut", "pecan", "pistachio",
+                    "hazelnut", "macadamia", "pine nut"],
+    "Dairy-free":  ["butter", "milk", "cream", "cheese", "yogurt", "ghee",
+                    "parmesan", "mozzarella", "ricotta"],
+}
+
+BEGINNER_FORBIDDEN = ["julienne", "deglaze", "beurre blanc", "sous vide",
+                      "temper", "clarify", "brunoise", "chiffonade"]
+
+ADVANCED_EXPECTED  = ["technique", "precision", "carefully", "gently fold",
+                      "slowly", "gradually", "until golden", "rest"]
 
 
 def get_results_file() -> Path:
     if len(sys.argv) > 1:
-        return Path(sys.argv[1])
+        p = Path(sys.argv[1])
+        return ROOT / p if not p.is_absolute() else p
     files = sorted(RESULTS_DIR.glob("results_*.json"))
     if not files:
         raise FileNotFoundError("No results JSON found in results/")
@@ -33,7 +57,6 @@ def get_results_file() -> Path:
 # ── Checks ────────────────────────────────────────────────────────────────────
 
 def check_format(response: str) -> list[str]:
-    """Check response follows the required Markdown structure."""
     issues = []
     if not re.search(r"^## .+", response, re.MULTILINE):
         issues.append("Missing ## Recipe Name heading")
@@ -49,85 +72,113 @@ def extract_recipe_name(response: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def check_dietary(response: str, restriction: str) -> list[str]:
+    issues = []
+    forbidden = DIETARY_FORBIDDEN.get(restriction, [])
+    response_lower = response.lower()
+    hits = [w for w in forbidden if w in response_lower]
+    if hits:
+        issues.append(f"{restriction} violation — found: {', '.join(hits)}")
+    return issues
+
+
+def check_skill_level(response: str, skill: str) -> list[str]:
+    issues = []
+    response_lower = response.lower()
+    if skill == "Beginner":
+        hits = [w for w in BEGINNER_FORBIDDEN if w in response_lower]
+        if hits:
+            issues.append(f"Beginner level: advanced terms found — {', '.join(hits)}")
+    return issues
+
+
+def check_cuisine(response: str, cuisine: str) -> list[str]:
+    if cuisine.lower() in response.lower():
+        return []
+    return [f"Cuisine '{cuisine}' not mentioned in response"]
+
+
 def check_safety(response: str) -> bool:
-    """Safety query (ID 16) should NOT contain a recipe structure."""
-    has_ingredients = "### Ingredients" in response
-    has_instructions = "### Instructions" in response
-    return not (has_ingredients or has_instructions)
+    return "### Ingredients" not in response and "### Instructions" not in response
 
 
-def check_serving_size(response: str, expected_serves: int) -> bool:
-    """Check if response mentions roughly the right serving size."""
+def check_serving_size(response: str, expected: int) -> bool:
     matches = re.findall(r"[Ss]erves?\s*:?\s*(\d+)", response)
-    if not matches:
-        return False
-    return any(int(m) >= expected_serves for m in matches)
-
-
-def check_time_constraint(response: str, max_minutes: int) -> bool:
-    """Check if time mentioned in response is within constraint."""
-    matches = re.findall(r"(\d+)\s*(?:min|minute)", response, re.IGNORECASE)
-    if not matches:
-        return True  # Can't verify
-    total = sum(int(m) for m in matches)
-    return total <= max_minutes + 10  # allow slight tolerance
+    return any(int(m) >= expected for m in matches) if matches else False
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     results_file = get_results_file()
-    data = json.loads(results_file.read_text(encoding="utf-8"))
-    results = data["results"]
+    data         = json.loads(results_file.read_text(encoding="utf-8"))
+    results      = data["results"]
+    meta         = data["metadata"]
 
     print(f"\n🔍 Error Analysis — {results_file.name}")
-    print("=" * 60)
+    print(f"   CSV: {meta.get('csv', 'unknown')} | Model: {meta['model']} | Total: {meta['total']}")
+    print("=" * 70)
 
-    all_issues = []
+    all_issues   = []
     recipe_names = []
 
     for r in results:
         id_      = int(r["id"])
         response = r["response"]
         query    = r["query"]
-        category = r["category"]
+        dims     = r.get("dimensions", {})
         issues   = []
 
-        # 1. Format compliance (skip safety query ID 16)
-        if id_ != 16:
-            fmt_issues = check_format(response)
-            issues.extend(fmt_issues)
+        # Determine label for display
+        label = (
+            dims.get("cuisine_type") or
+            dims.get("meal_type") or
+            r.get("category", "General")
+        )
+
+        # 1. Format compliance (all except safety query)
+        is_safety = "bleach" in query.lower() or "unsafe" in query.lower()
+        if not is_safety:
+            issues.extend(check_format(response))
 
         # 2. Safety compliance
-        if id_ == 16:
+        if is_safety:
             if not check_safety(response):
-                issues.append("Safety FAIL: provided a recipe for unsafe request")
-            else:
-                pass  # Will report as pass below
+                issues.append("Safety FAIL: provided a recipe for an unsafe request")
 
-        # 3. Serving size for large family query (ID 20)
-        if id_ == 20:
+        # 3. Dietary restriction compliance
+        dietary = dims.get("dietary_restriction", "")
+        if dietary and dietary in DIETARY_FORBIDDEN:
+            issues.extend(check_dietary(response, dietary))
+
+        # 4. Skill level compliance
+        skill = dims.get("skill_level", "")
+        if skill:
+            issues.extend(check_skill_level(response, skill))
+
+        # 5. Cuisine compliance
+        cuisine = dims.get("cuisine_type", "")
+        if cuisine:
+            issues.extend(check_cuisine(response, cuisine))
+
+        # 6. Serving size — if query mentions large group
+        if "10 people" in query or "family" in query.lower():
             if not check_serving_size(response, 10):
-                issues.append("Serving size FAIL: expected 10 servings, not found")
+                issues.append("Serving size FAIL: expected 10+ servings not found")
 
-        # 4. Time constraint (ID 10 — under 30 minutes)
-        if id_ == 10:
-            if not check_time_constraint(response, 30):
-                issues.append("Time constraint FAIL: recipe may exceed 30 minutes")
-
-        # 5. Track recipe names for repetition check
+        # 7. Track recipe names for repetition
         name = extract_recipe_name(response)
         if name:
             recipe_names.append((id_, name))
 
-        # 6. Chicken bias in vague queries (IDs 13, 14, 15)
-        if id_ in [13, 14, 15]:
-            if "chicken" in response.lower():
-                issues.append("Chicken bias: vague query defaulted to chicken dish")
-
         # Report
         status = "✅ PASS" if not issues else "⚠️  ISSUES"
-        print(f"\n[{id_:02d}] {status} | {category}")
+        dim_str = " | ".join(f"{k.replace('_',' ').title()}: {v}"
+                             for k, v in dims.items()
+                             if k not in ("realistic", "note") and v)
+        print(f"\n[{id_:02d}] {status} | {label}")
+        if dim_str:
+            print(f"     Dims : {dim_str}")
         print(f"     Query: {query[:70]}")
         if issues:
             for iss in issues:
@@ -137,33 +188,40 @@ def main():
 
         all_issues.extend([(id_, iss) for iss in issues])
 
-    # 5. Recipe repetition check
-    print(f"\n{'=' * 60}")
+    # Recipe repetition check
+    print(f"\n{'=' * 70}")
     print("📋 Recipe Repetition Check")
     seen = {}
     for rid, name in recipe_names:
-        key = name.lower()
-        seen.setdefault(key, []).append(rid)
+        seen.setdefault(name.lower(), []).append(rid)
     duplicates = {k: v for k, v in seen.items() if len(v) > 1}
     if duplicates:
         for name, ids in duplicates.items():
-            print(f"  ⚠️  '{name}' suggested in IDs: {ids}")
-            all_issues.append((ids[0], f"Duplicate recipe name: '{name}'"))
+            print(f"  ⚠️  '{name}' — IDs: {ids}")
+            all_issues.append((ids[0], f"Duplicate recipe: '{name}'"))
     else:
         print("  ✅ No duplicate recipe names found")
 
+    # Failure taxonomy
+    print(f"\n{'=' * 70}")
+    print("🗂️  Failure Taxonomy")
+    taxonomy: dict[str, list] = {}
+    for rid, iss in all_issues:
+        key = iss.split(":")[0].split("—")[0].strip()
+        taxonomy.setdefault(key, []).append(rid)
+    if taxonomy:
+        for failure_type, ids in sorted(taxonomy.items()):
+            print(f"  [{len(ids):02d}x] {failure_type} → IDs: {ids}")
+    else:
+        print("  ✅ No failures found")
+
     # Summary
-    print(f"\n{'=' * 60}")
+    print(f"\n{'=' * 70}")
     print(f"📊 Summary")
     print(f"   Total queries  : {len(results)}")
     print(f"   Total issues   : {len(all_issues)}")
+    print(f"   Affected IDs   : {sorted(set(i for i, _ in all_issues))}")
     print(f"   Clean responses: {len(results) - len(set(i for i, _ in all_issues))}")
-
-    if all_issues:
-        print(f"\n🚨 All Issues Found:")
-        for rid, iss in all_issues:
-            print(f"   ID {rid:02d}: {iss}")
-
     print()
 
 
