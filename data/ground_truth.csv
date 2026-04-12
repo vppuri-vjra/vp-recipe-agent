@@ -1,0 +1,21 @@
+id,query,checker_prediction,issue_flagged,ground_truth,label,reviewer_note
+1,I'm a beginner cook looking for a vegan Italian dinner recipe,FAIL,Vegan violation — found: cream,PASS,FP,Bot used cashew cream which is fully vegan — keyword match on 'cream' was wrong
+2,Can you suggest a gluten-free Thai dish for lunch?,FAIL,Gluten-free violation — found: soy sauce,PASS,FP,Bot explicitly used tamari (gluten-free soy sauce alternative) — not a violation
+3,What's a good Mexican breakfast recipe for someone with intermediate cooking skills?,PASS,,PASS,TN,No issues — correctly cleared
+4,I need an advanced keto Japanese dinner recipe,FAIL,Keto violation — found: rice sugar,PASS,FP,Bot used rice vinegar (not rice grain) and replaced sugar with stevia — no keto violation
+5,Looking for dairy-free Indian dinner ideas,FAIL,Dairy-free violation — found: cream,PASS,FP,Word 'creamy' appeared in description — no actual dairy ingredient in recipe
+6,Easy nut-free snack recipes for a beginner?,PASS,,PASS,TN,No issues — correctly cleared
+7,What's a challenging Italian dessert I can try as an experienced baker?,PASS,,PASS,TN,No issues — correctly cleared
+8,Simple vegan Thai recipes for someone just learning to cook,FAIL,Vegan violation — found: butter cream | Beginner level — found: julienne,PASS,FP,Peanut butter is vegan; 'creamy' is descriptive; 'julienned or grated' offers beginner-friendly alternative
+9,Gluten-free Japanese breakfast options?,PASS,,PASS,TN,No issues — correctly cleared
+10,I'm new to cooking and keto - any easy Mexican dinner ideas?,PASS,,PASS,TN,No issues — correctly cleared
+11,Vegan Indian lunch recipes that aren't too basic but not super hard,FAIL,Vegan violation — found: cream,PASS,FP,Word 'rich' sauce description — no dairy ingredient found in full recipe
+12,Are there any keto-friendly Japanese desserts?,PASS,,PASS,TN,No issues — correctly cleared
+13,What's an easy dinner recipe for someone who doesn't cook much?,FAIL,Beginner level — found: temper,PASS,FP,Word 'temper' found inside 'temperature' — not the advanced cooking technique
+14,Thai dinner recipes without peanuts or tree nuts for an intermediate cook,PASS,,PASS,TN,No issues — correctly cleared
+15,Gluten-free Italian lunch ideas that aren't just salad,FAIL,Gluten-free violation — found: pasta,PASS,FP,Recipe had no pasta as ingredient — word appeared in passing in description only
+16,Quick vegan Mexican snacks I can make at home,FAIL,Vegan violation — found: cream,PASS,FP,'Creamy avocado' in description — avocado is vegan; no dairy ingredient used
+17,Easy Indian breakfast recipes for a beginner cook,PASS,,PASS,TN,No issues — correctly cleared
+18,"Dessert recipes that are both dairy-free and gluten-free, intermediate level",PASS,,PASS,TN,No issues — correctly cleared
+19,Simple vegan Japanese dinner for a cooking newbie,FAIL,Vegan violation — found: egg,FAIL,TP,Bot suggested fried egg as optional topping — violates vegan constraint
+20,Keto Italian breakfast ideas?,PASS,,PASS,TN,No issues — correctly cleared

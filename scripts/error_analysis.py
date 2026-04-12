@@ -15,6 +15,7 @@ Usage:
     uv run python scripts/error_analysis.py results/results_<timestamp>.json
 """
 
+import csv
 import json
 import re
 import sys
@@ -22,6 +23,7 @@ from pathlib import Path
 
 ROOT        = Path(__file__).parent.parent
 RESULTS_DIR = ROOT / "results"
+GROUND_TRUTH_FILE = ROOT / "data" / "ground_truth.csv"
 
 # ── Dietary keywords that should NOT appear for each restriction ───────────────
 DIETARY_FORBIDDEN = {
@@ -42,6 +44,14 @@ BEGINNER_FORBIDDEN = ["julienne", "deglaze", "beurre blanc", "sous vide",
 
 ADVANCED_EXPECTED  = ["technique", "precision", "carefully", "gently fold",
                       "slowly", "gradually", "until golden", "rest"]
+
+
+def load_ground_truth() -> dict:
+    """Load ground truth labels keyed by query id."""
+    if not GROUND_TRUTH_FILE.exists():
+        return {}
+    with open(GROUND_TRUTH_FILE, newline="", encoding="utf-8") as f:
+        return {row["id"]: row for row in csv.DictReader(f)}
 
 
 def get_results_file() -> Path:
@@ -114,6 +124,7 @@ def main():
     data         = json.loads(results_file.read_text(encoding="utf-8"))
     results      = data["results"]
     meta         = data["metadata"]
+    ground_truth = load_ground_truth()
 
     print(f"\n🔍 Error Analysis — {results_file.name}")
     print(f"   CSV: {meta.get('csv', 'unknown')} | Model: {meta['model']} | Total: {meta['total']}")
@@ -222,6 +233,45 @@ def main():
     print(f"   Total issues   : {len(all_issues)}")
     print(f"   Affected IDs   : {sorted(set(i for i, _ in all_issues))}")
     print(f"   Clean responses: {len(results) - len(set(i for i, _ in all_issues))}")
+
+    # TPR / TNR calculation from ground truth
+    if ground_truth:
+        tp = sum(1 for row in ground_truth.values() if row["label"] == "TP")
+        fp = sum(1 for row in ground_truth.values() if row["label"] == "FP")
+        tn = sum(1 for row in ground_truth.values() if row["label"] == "TN")
+        fn = sum(1 for row in ground_truth.values() if row["label"] == "FN")
+
+        tpr = tp / (tp + fn) if (tp + fn) > 0 else 0.0  # sensitivity / recall
+        tnr = tn / (tn + fp) if (tn + fp) > 0 else 0.0  # specificity
+        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0  # false alarm rate
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+
+        print(f"\n{'=' * 70}")
+        print(f"📐 Confusion Matrix (from ground_truth.csv)")
+        print(f"   TP (caught real failures)   : {tp:>3}")
+        print(f"   FP (false alarms)           : {fp:>3}")
+        print(f"   TN (correctly cleared)      : {tn:>3}")
+        print(f"   FN (missed real failures)   : {fn:>3}")
+
+        print(f"\n📈 Checker Performance Metrics")
+        print(f"   TPR  (True Positive Rate / Recall)  : {tpr:.1%}  ← of real failures, how many caught?")
+        print(f"   TNR  (True Negative Rate / Specificity): {tnr:.1%}  ← of real passes, how many cleared correctly?")
+        print(f"   FPR  (False Positive Rate)          : {fpr:.1%}  ← false alarm rate")
+        print(f"   Precision                           : {precision:.1%}  ← of flagged, how many were real?")
+
+        print(f"\n💡 Interpretation")
+        if tpr == 1.0:
+            print(f"   ✅ TPR=100% — checker caught every real failure")
+        elif tpr >= 0.8:
+            print(f"   ✅ TPR={tpr:.0%} — checker catches most real failures")
+        else:
+            print(f"   ⚠️  TPR={tpr:.0%} — checker misses too many real failures (high FN)")
+
+        if tnr >= 0.8:
+            print(f"   ✅ TNR={tnr:.0%} — checker rarely raises false alarms")
+        else:
+            print(f"   ⚠️  TNR={tnr:.0%} — checker raises too many false alarms (high FP)")
+            print(f"   💡 Tip: Improve keyword matching (e.g. 'peanut butter' ≠ 'butter')")
     print()
 
 
