@@ -14,12 +14,11 @@ import anthropic
 from dotenv import load_dotenv
 
 # ── Config ────────────────────────────────────────────────────────────────────
-load_dotenv()
+ROOT = Path(__file__).parent.parent
+load_dotenv(ROOT / ".env")
 
 MODEL = "claude-opus-4-5"
 MAX_TOKENS = 1024
-ROOT = Path(__file__).parent.parent
-
 SYSTEM_PROMPT_FILE = ROOT / "prompts" / "system_prompt.txt"
 QUERIES_FILE       = ROOT / "data" / "sample_queries.csv"
 RESULTS_DIR        = ROOT / "results"
