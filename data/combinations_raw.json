@@ -1,0 +1,228 @@
+[
+  {
+    "id": 1,
+    "combination": {
+      "Cuisine Type": "Italian",
+      "Dietary Restriction": "Vegan",
+      "Meal Type": "Dinner",
+      "Skill Level": "Beginner"
+    },
+    "query": "I'm a beginner cook looking for a vegan Italian dinner recipe",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 2,
+    "combination": {
+      "Cuisine Type": "Thai",
+      "Dietary Restriction": "Gluten-free",
+      "Meal Type": "Lunch"
+    },
+    "query": "Can you suggest a gluten-free Thai dish for lunch?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 3,
+    "combination": {
+      "Cuisine Type": "Mexican",
+      "Meal Type": "Breakfast",
+      "Skill Level": "Intermediate"
+    },
+    "query": "What's a good Mexican breakfast recipe for someone with intermediate cooking skills?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 4,
+    "combination": {
+      "Cuisine Type": "Japanese",
+      "Dietary Restriction": "Keto",
+      "Meal Type": "Dinner",
+      "Skill Level": "Advanced"
+    },
+    "query": "I need an advanced keto Japanese dinner recipe",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 5,
+    "combination": {
+      "Cuisine Type": "Indian",
+      "Dietary Restriction": "Dairy-free",
+      "Meal Type": "Dinner"
+    },
+    "query": "Looking for dairy-free Indian dinner ideas",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 6,
+    "combination": {
+      "Dietary Restriction": "Nut-free",
+      "Meal Type": "Snack",
+      "Skill Level": "Beginner"
+    },
+    "query": "Easy nut-free snack recipes for a beginner?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 7,
+    "combination": {
+      "Cuisine Type": "Italian",
+      "Meal Type": "Dessert",
+      "Skill Level": "Advanced"
+    },
+    "query": "What's a challenging Italian dessert I can try as an experienced baker?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 8,
+    "combination": {
+      "Cuisine Type": "Thai",
+      "Dietary Restriction": "Vegan",
+      "Skill Level": "Beginner"
+    },
+    "query": "Simple vegan Thai recipes for someone just learning to cook",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 9,
+    "combination": {
+      "Cuisine Type": "Japanese",
+      "Meal Type": "Breakfast",
+      "Dietary Restriction": "Gluten-free"
+    },
+    "query": "Gluten-free Japanese breakfast options?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 10,
+    "combination": {
+      "Cuisine Type": "Mexican",
+      "Dietary Restriction": "Keto",
+      "Meal Type": "Dinner",
+      "Skill Level": "Beginner"
+    },
+    "query": "I'm new to cooking and keto - any easy Mexican dinner ideas?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 11,
+    "combination": {
+      "Cuisine Type": "Indian",
+      "Dietary Restriction": "Vegan",
+      "Meal Type": "Lunch",
+      "Skill Level": "Intermediate"
+    },
+    "query": "Vegan Indian lunch recipes that aren't too basic but not super hard",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 12,
+    "combination": {
+      "Cuisine Type": "Japanese",
+      "Meal Type": "Dessert",
+      "Dietary Restriction": "Keto"
+    },
+    "query": "Are there any keto-friendly Japanese desserts?",
+    "realistic": true,
+    "note": "UNREALISTIC - Traditional Japanese desserts rely heavily on sugar, rice, and mochi which are not keto-friendly. Options would be very limited."
+  },
+  {
+    "id": 13,
+    "combination": {
+      "Meal Type": "Dinner",
+      "Skill Level": "Beginner"
+    },
+    "query": "What's an easy dinner recipe for someone who doesn't cook much?",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 14,
+    "combination": {
+      "Cuisine Type": "Thai",
+      "Dietary Restriction": "Nut-free",
+      "Meal Type": "Dinner",
+      "Skill Level": "Intermediate"
+    },
+    "query": "Thai dinner recipes without peanuts or tree nuts for an intermediate cook",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 15,
+    "combination": {
+      "Cuisine Type": "Italian",
+      "Dietary Restriction": "Gluten-free",
+      "Meal Type": "Lunch"
+    },
+    "query": "Gluten-free Italian lunch ideas that aren't just salad",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 16,
+    "combination": {
+      "Cuisine Type": "Mexican",
+      "Dietary Restriction": "Vegan",
+      "Meal Type": "Snack"
+    },
+    "query": "Quick vegan Mexican snacks I can make at home",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 17,
+    "combination": {
+      "Cuisine Type": "Indian",
+      "Meal Type": "Breakfast",
+      "Skill Level": "Beginner"
+    },
+    "query": "Easy Indian breakfast recipes for a beginner cook",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 18,
+    "combination": {
+      "Dietary Restriction": "Dairy-free",
+      "Dietary Restriction2": "Gluten-free",
+      "Meal Type": "Dessert",
+      "Skill Level": "Intermediate"
+    },
+    "query": "Dessert recipes that are both dairy-free and gluten-free for intermediate level",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 19,
+    "combination": {
+      "Cuisine Type": "Japanese",
+      "Dietary Restriction": "Vegan",
+      "Meal Type": "Dinner",
+      "Skill Level": "Beginner"
+    },
+    "query": "Simple vegan Japanese dinner for a cooking newbie",
+    "realistic": true,
+    "note": ""
+  },
+  {
+    "id": 20,
+    "combination": {
+      "Cuisine Type": "Italian",
+      "Dietary Restriction": "Keto",
+      "Meal Type": "Breakfast"
+    },
+    "query": "Keto Italian breakfast ideas?",
+    "realistic": true,
+    "note": "UNREALISTIC - Italian breakfasts traditionally consist of pastries, bread, and sweet items which are not keto-friendly. This combination would yield very limited authentic options."
+  }
+]

@@ -1,0 +1,21 @@
+id,query,cuisine_type,dietary_restriction,meal_type,skill_level,realistic,note
+1,I'm a beginner cook looking for a vegan Italian dinner recipe,Italian,Vegan,Dinner,Beginner,Yes,
+2,Can you suggest a gluten-free Thai dish for lunch?,Thai,Gluten-free,Lunch,,Yes,
+3,What's a good Mexican breakfast recipe for someone with intermediate cooking skills?,Mexican,,Breakfast,Intermediate,Yes,
+4,I need an advanced keto Japanese dinner recipe,Japanese,Keto,Dinner,Advanced,Yes,
+5,Looking for dairy-free Indian dinner ideas,Indian,Dairy-free,Dinner,,Yes,
+6,Easy nut-free snack recipes for a beginner?,,"Nut-free",Snack,Beginner,Yes,
+7,What's a challenging Italian dessert I can try as an experienced baker?,Italian,,Dessert,Advanced,Yes,
+8,Simple vegan Thai recipes for someone just learning to cook,Thai,Vegan,,Beginner,Yes,
+9,Gluten-free Japanese breakfast options?,Japanese,Gluten-free,Breakfast,,Yes,
+10,I'm new to cooking and keto - any easy Mexican dinner ideas?,Mexican,Keto,Dinner,Beginner,Yes,
+11,Vegan Indian lunch recipes that aren't too basic but not super hard,Indian,Vegan,Lunch,Intermediate,Yes,
+12,Are there any keto-friendly Japanese desserts?,Japanese,Keto,Dessert,,Borderline,Traditional Japanese desserts are rice/sugar heavy — very limited keto options
+13,What's an easy dinner recipe for someone who doesn't cook much?,,,,Beginner,Yes,
+14,Thai dinner recipes without peanuts or tree nuts for an intermediate cook,Thai,Nut-free,Dinner,Intermediate,Yes,
+15,Gluten-free Italian lunch ideas that aren't just salad,Italian,Gluten-free,Lunch,,Yes,
+16,Quick vegan Mexican snacks I can make at home,Mexican,Vegan,Snack,,Yes,
+17,Easy Indian breakfast recipes for a beginner cook,Indian,,Breakfast,Beginner,Yes,
+18,"Dessert recipes that are both dairy-free and gluten-free, intermediate level",,"Dairy-free + Gluten-free",Dessert,Intermediate,Yes,
+19,Simple vegan Japanese dinner for a cooking newbie,Japanese,Vegan,Dinner,Beginner,Yes,
+20,Keto Italian breakfast ideas?,Italian,Keto,Breakfast,,Borderline,Italian breakfast is pastry/bread heavy — limited authentic keto options
