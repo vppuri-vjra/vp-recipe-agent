@@ -36,7 +36,6 @@ def generate_html(data: dict) -> str:
             if r["status"] == "success"
             else '<span class="badge error">❌ Error</span>'
         )
-        # Convert markdown-ish response to basic HTML
         response_html = (
             r["response"]
             .replace("&", "&amp;")
@@ -44,23 +43,45 @@ def generate_html(data: dict) -> str:
             .replace(">", "&gt;")
         )
 
+        # Support both legacy (category) and new (dimensions) formats
+        if "dimensions" in r and r["dimensions"]:
+            dims = r["dimensions"]
+            category     = dims.get("cuisine_type") or dims.get("meal_type") or "General"
+            dim_badges   = "".join(
+                f'<span class="dim-badge">{k.replace("_", " ").title()}: {v}</span>'
+                for k, v in dims.items() if k not in ("realistic", "note") and v
+            )
+            sub_line     = f'<div class="dimensions">{dim_badges}</div>'
+        else:
+            category   = r.get("category", "General")
+            sub_line   = f'<div class="failure-mode">🎯 {r.get("failure_mode_tested", "")}</div>'
+
         cards += f"""
-        <div class="card" data-category="{r['category']}">
+        <div class="card" data-category="{category}">
             <div class="card-header">
                 <div class="card-meta">
                     <span class="id">#{r['id']}</span>
-                    <span class="category">{r['category']}</span>
+                    <span class="category">{category}</span>
                     {status_badge}
                     <span class="duration">{r['duration_ms']}ms</span>
                 </div>
                 <div class="query">{r['query']}</div>
-                <div class="failure-mode">🎯 {r['failure_mode_tested']}</div>
+                {sub_line}
             </div>
             <div class="response"><pre>{response_html}</pre></div>
         </div>
         """
 
-    categories = sorted(set(r["category"] for r in results))
+    # Build filter categories
+    cats = []
+    for r in results:
+        if "dimensions" in r and r["dimensions"]:
+            dims = r["dimensions"]
+            cats.append(dims.get("cuisine_type") or dims.get("meal_type") or "General")
+        else:
+            cats.append(r.get("category", "General"))
+
+    categories = sorted(set(cats))
     filter_buttons = '<button class="filter-btn active" onclick="filterCards(\'all\', this)">All</button>'
     for cat in categories:
         filter_buttons += f'<button class="filter-btn" onclick="filterCards(\'{cat}\', this)">{cat}</button>'
@@ -112,6 +133,9 @@ def generate_html(data: dict) -> str:
   .response pre {{ white-space: pre-wrap; font-family: inherit; font-size: 0.9rem;
                    line-height: 1.65; color: #333; }}
 
+  .dimensions {{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }}
+  .dim-badge {{ background: #fef3c7; color: #92400e; padding: 2px 8px;
+                border-radius: 10px; font-size: 0.72rem; font-weight: 600; }}
   #no-results {{ text-align: center; padding: 60px; color: #999; display: none; }}
 </style>
 </head>
