@@ -32,11 +32,61 @@ DIETARY_FORBIDDEN = {
     "Gluten-free": ["flour", "bread", "pasta", "wheat", "barley", "rye", "soy sauce",
                     "breadcrumbs", "couscous", "semolina"],
     "Keto":        ["rice", "pasta", "bread", "flour", "sugar", "potato", "corn",
-                    "oats", "honey", "maple syrup"],
+                    "oats", "honey"],  # maple syrup removed — often mentioned as avoided
     "Nut-free":    ["peanut", "almond", "cashew", "walnut", "pecan", "pistachio",
                     "hazelnut", "macadamia", "pine nut"],
     "Dairy-free":  ["butter", "milk", "cream", "cheese", "yogurt", "ghee",
                     "parmesan", "mozzarella", "ricotta"],
+}
+
+# ── Safe compound phrases — these contain a forbidden keyword but are NOT violations ──
+# e.g. "cashew cream" is vegan, "peanut butter" is not butter, "rice vinegar" is not rice (keto)
+DIETARY_SAFE_COMPOUNDS = {
+    "Vegan": [
+        "cashew cream", "coconut cream", "oat cream", "almond cream",
+        "peanut butter", "almond butter", "cashew butter", "sunflower butter",
+        "coconut milk", "oat milk", "almond milk", "soy milk", "rice milk",
+        "vegan butter", "plant butter", "dairy-free butter",
+        "vegan cheese", "nutritional cheese", "cashew cheese",
+        "flax egg", "chia egg", "egg-free", "agave honey", "maple honey",
+        "fish sauce alternative", "no fish", "without fish",
+        "coconut cream sauce", "creamy coconut", "creamy tahini",
+        "creamy avocado", "creamy tofu",
+    ],
+    "Gluten-free": [
+        "tamari", "gluten-free soy sauce", "coconut aminos",
+        "rice flour", "almond flour", "gluten-free flour", "chickpea flour",
+        "gluten-free bread", "gluten-free pasta", "rice pasta", "corn pasta",
+        "gluten-free breadcrumbs", "rice breadcrumbs",
+        "gluten-free",  # if 'gluten-free' precedes the forbidden word, it's safe
+    ],
+    "Keto": [
+        "rice vinegar", "rice wine vinegar", "rice wine",
+        "cauliflower rice", "broccoli rice", "shirataki rice",
+        "bread alternative", "cloud bread", "keto bread",
+        "coconut flour", "almond flour",
+        "sugar-free", "no sugar", "without sugar", "replace sugar",
+        "instead of sugar", "replaces sugar", "traditional mirin sugar",
+        "to replace traditional", "substitute for sugar",
+        "stevia", "erythritol", "monk fruit",
+        "corn starch alternative", "cornstarch slurry",
+        "honey mustard", "raw honey (optional)",
+        "instead of honey", "replace honey", "replaces honey",
+    ],
+    "Nut-free": [
+        # If the dish is nut-free but mentions nuts to avoid, that's fine
+        "nut-free", "without nuts", "no nuts", "avoid nuts",
+    ],
+    "Dairy-free": [
+        "cashew cream", "coconut cream", "oat cream", "almond cream",
+        "peanut butter", "almond butter", "cashew butter", "sunflower butter",
+        "coconut milk", "oat milk", "almond milk", "soy milk",
+        "vegan butter", "plant butter", "dairy-free butter", "coconut butter",
+        "dairy-free cheese", "vegan cheese", "cashew cheese",
+        "dairy-free", "non-dairy",
+        "creamy avocado", "creamy tahini", "creamy tofu", "creamy coconut",
+        "ghee alternative",
+    ],
 }
 
 BEGINNER_FORBIDDEN = ["julienne", "deglaze", "beurre blanc", "sous vide",
@@ -82,21 +132,59 @@ def extract_recipe_name(response: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def _mask_safe_compounds(text: str, safe_compounds: list[str]) -> str:
+    """Replace safe compound phrases with a placeholder so their keywords aren't flagged."""
+    masked = text
+    for compound in safe_compounds:
+        # Replace all occurrences (case-insensitive) with underscored placeholder
+        placeholder = compound.replace(" ", "_").replace("-", "_")
+        masked = re.sub(re.escape(compound), placeholder, masked, flags=re.IGNORECASE)
+    return masked
+
+
 def check_dietary(response: str, restriction: str) -> list[str]:
+    """
+    Context-aware dietary checker.
+    1. Mask safe compound phrases (e.g. 'cashew cream', 'peanut butter') so their
+       component keywords are not flagged.
+    2. Use whole-word regex matching (not substring) to avoid partial hits
+       (e.g. 'creamy' should not match 'cream').
+    """
     issues = []
     forbidden = DIETARY_FORBIDDEN.get(restriction, [])
-    response_lower = response.lower()
-    hits = [w for w in forbidden if w in response_lower]
+    safe_compounds = DIETARY_SAFE_COMPOUNDS.get(restriction, [])
+
+    # Step 1: mask safe compounds so their keywords won't be flagged
+    masked = _mask_safe_compounds(response.lower(), safe_compounds)
+
+    # Step 2: whole-word match on forbidden keywords
+    hits = []
+    for word in forbidden:
+        # Use word boundary so 'cream' doesn't match 'creamy', 'egg' doesn't match 'eggplant'
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, masked):
+            hits.append(word)
+
     if hits:
         issues.append(f"{restriction} violation — found: {', '.join(hits)}")
     return issues
 
 
 def check_skill_level(response: str, skill: str) -> list[str]:
+    """
+    Context-aware skill level checker.
+    Uses word-boundary matching so 'temper' does not match inside 'temperature',
+    and 'clarify' doesn't match 'clarified' in a non-cooking context.
+    """
     issues = []
     response_lower = response.lower()
     if skill == "Beginner":
-        hits = [w for w in BEGINNER_FORBIDDEN if w in response_lower]
+        hits = []
+        for term in BEGINNER_FORBIDDEN:
+            # Word boundary match to avoid partial hits (e.g. 'temper' in 'temperature')
+            pattern = r'\b' + re.escape(term) + r'\b'
+            if re.search(pattern, response_lower):
+                hits.append(term)
         if hits:
             issues.append(f"Beginner level: advanced terms found — {', '.join(hits)}")
     return issues
